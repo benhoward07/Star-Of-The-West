@@ -8,6 +8,10 @@ It is a plain web app (TypeScript + Vite), so it opens in iPhone Safari with no 
 
 **Printable QR codes:** https://benhoward07.github.io/Star-Of-The-West/?print=1
 
+Scan to play:
+
+<img src="play-qr.png" alt="QR code that opens the game" width="220" />
+
 ## How the game works
 
 1. **Title screen** - welcome and instructions.
