@@ -1,0 +1,16 @@
+{
+  "name": "Star of the West",
+  "short_name": "Star of the West",
+  "description": "A QR-code learning game about the Star of the West Monument at The Citadel.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    { "src": "images/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "images/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "images/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
