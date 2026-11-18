@@ -26,7 +26,7 @@ export class TitleScreen implements Screen {
         el(
           'ol',
           {},
-          el('li', {}, 'Find the QR code at each station and scan it, or just tap a topic.'),
+          el('li', {}, "Hunt for the floating 3D codes, scan a station's QR code, or just tap a topic."),
           el('li', {}, 'Listen to the story of the Star of the West.'),
           el('li', {}, 'Answer the quiz. Quick, correct answers earn bonus points.'),
           el('li', {}, 'Collect all three medals and rise from Recruit to Colonel.'),

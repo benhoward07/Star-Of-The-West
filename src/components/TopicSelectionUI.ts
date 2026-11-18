@@ -8,7 +8,7 @@ export interface TopicSelectionOptions {
   locationImage?: string;
 }
 
-/** The hub: progress, the Scan QR button, and one card per topic. */
+/** The hub: progress, the 3D hunt and Scan QR buttons, and one card per topic. */
 export class TopicSelectionUI implements Screen {
   readonly element: HTMLElement;
   private list: HTMLElement;
@@ -30,7 +30,13 @@ export class TopicSelectionUI implements Screen {
         ? el('img', { class: 'location-image', src: options.locationImage, alt: 'The Citadel campus' })
         : null,
       el('h1', { class: 'screen-title' }, 'Choose a Topic'),
-      el('p', { class: 'lead' }, "Scan a station's QR code, or tap a topic to begin."),
+      el('p', { class: 'lead' }, "Hunt for the floating 3D codes, scan a station's QR code, or tap a topic to begin."),
+      el(
+        'button',
+        { class: 'btn primary hunt-btn', type: 'button', onClick: () => ctx.screens.show('hunt') },
+        el('span', { class: 'cube-icon', 'aria-hidden': 'true' }),
+        'Hunt for 3D Codes',
+      ),
       el(
         'button',
         { class: 'btn secondary scan-btn', type: 'button', onClick: () => ctx.screens.show('scanner') },

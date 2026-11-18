@@ -15,7 +15,7 @@ Scan to play:
 ## How the game works
 
 1. **Title screen** - welcome and instructions.
-2. **Choose a topic** - scan a station's QR code or tap a topic card.
+2. **Choose a topic** - hunt for the floating 3D codes, scan a station's QR code, or tap a topic card.
 3. **Narration** - the story is read aloud by a recorded narrator, with each sentence highlighted as it is spoken.
 4. **Quiz** - three multiple choice questions, 20 seconds each, instant feedback.
 5. **Medal** - an animated medal, a points breakdown, and a promotion when you rank up.
@@ -69,6 +69,17 @@ Open the game and tap **Print QR codes** on the topic screen (or add `?print=1` 
 
 Scanning a station code with the normal iPhone camera opens the game on that topic. The **Scan Station QR Code** button inside the game reads the same codes.
 
+### 3D code hunt (no printed codes needed)
+
+Tap **Hunt for 3D Codes** on the topic screen. The phone shows its camera view with three QR code cubes floating around you. Tilt the phone up to find the sky codes, hold it level to find the wall codes, and keep the centre ring on a cube for a second to scan it. That opens the station's story and quiz.
+
+- The cubes go to new random spots every time the hunt opens. There is always at least one in the sky and one at wall level.
+- After 12 seconds without a find, a gold arrow points toward the nearest station still to do.
+- Finished stations show as gold cubes with a check mark and can be replayed for practice.
+- The phone asks for motion and camera access when you tap **Start Hunt**. If the camera is refused, the hunt shows a night sky instead. If motion is refused (or on a computer), drag the picture to look around.
+
+The cubes float in *directions* around the player. They are not attached to real walls, so turning finds them and walking does not bring them closer. "Sky" simply means the phone is tilted up, indoors or out. The placement rules are in [src/services/hunt.ts](src/services/hunt.ts) and the screen is [src/components/ARHuntScreen.ts](src/components/ARHuntScreen.ts).
+
 ## Changing the game
 
 Everything a player reads lives in [src/GameState.ts](src/GameState.ts).
@@ -121,8 +132,10 @@ src/index.ts                  start-up and screen wiring
 src/GameState.ts              topics, quizzes, medals, score, ranks
 src/ScreenManager.ts          shows one screen at a time
 src/components/               one file per screen (title, topics, narration,
-                              quiz, medal, conclusion, scanner, print sheet)
-src/services/                 narration audio, saving, QR links, sharing
+                              quiz, medal, conclusion, scanner, 3D hunt,
+                              print sheet)
+src/services/                 narration audio, saving, QR links, sharing,
+                              3D hunt placement rules
 src/art.ts                    medal, rank insignia and emblem drawings
 src/styles.css                theme and layout
 public/audio/                 narration recordings and sentence timings

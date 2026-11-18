@@ -9,7 +9,8 @@ export type ScreenName =
   | 'quiz'
   | 'medal'
   | 'conclusion'
-  | 'scanner';
+  | 'scanner'
+  | 'hunt';
 
 /** One full-page view of the game. */
 export interface Screen<Params = unknown> {

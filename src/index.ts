@@ -1,6 +1,7 @@
 import './styles.css';
 import { GameState } from './GameState';
 import { ScreenManager, type AppContext } from './ScreenManager';
+import { ARHuntScreen } from './components/ARHuntScreen';
 import { ConclusionScreen } from './components/ConclusionScreen';
 import { MedalAwardScreen } from './components/MedalAwardScreen';
 import { NarrationScreen } from './components/NarrationScreen';
@@ -48,6 +49,7 @@ function startGame(appRoot: HTMLElement): void {
   screens.register('medal', new MedalAwardScreen(ctx));
   screens.register('conclusion', new ConclusionScreen(ctx));
   screens.register('scanner', new QRScannerScreen(ctx));
+  screens.register('hunt', new ARHuntScreen(ctx));
 
   // Remember progress on this device whenever anything changes.
   const save = () => storage.save(game.serialize());
