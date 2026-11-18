@@ -6,3 +6,4 @@ Thumbs.db
 npm-debug.log*
 .vite/
 .claude/
+tools/narration/.game-content.mjs

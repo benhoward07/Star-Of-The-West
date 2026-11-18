@@ -16,7 +16,7 @@ Scan to play:
 
 1. **Title screen** - welcome and instructions.
 2. **Choose a topic** - scan a station's QR code or tap a topic card.
-3. **Narration** - the story is read aloud, with the words on screen.
+3. **Narration** - the story is read aloud by a recorded narrator, with each sentence highlighted as it is spoken.
 4. **Quiz** - three multiple choice questions, 20 seconds each, instant feedback.
 5. **Medal** - an animated medal, a points breakdown, and a promotion when you rank up.
 6. **Results** - final rank, score and medals, with Share and Play Again.
@@ -105,7 +105,7 @@ To add a station, add a topic and a medal with matching `medalId`, then print th
 
 **Ranks and scoring** - `RANKS`, `POINTS_PER_DIFFICULTY`, `QUIZ_BONUS`, `SPEED_BONUS`, `QUESTION_TIME_SECONDS` and `FAST_ANSWER_SECONDS` at the top of the same file.
 
-**Recorded narration** - drop `topic1.mp3`, `topic2.mp3` and `topic3.mp3` into [public/audio](public/audio). When a file is there the game plays it; otherwise the phone's built-in voice reads the narration text.
+**Narration voice** - the recordings in [public/audio](public/audio) were generated from the narration text with the free Kokoro text-to-speech model. After editing a narration, run `npm run narration` to record it again (the first run downloads a 326 MB voice model). Until then the game reads the edited text with the phone's built-in voice, so the audio never disagrees with the screen. See [public/audio/README.md](public/audio/README.md) for other voices and for using your own recordings.
 
 **Photos** - put images in [public/images](public/images) and set a topic's `image`, or set `locationImage` in [src/index.ts](src/index.ts) to show a campus photo above the topic list. The built-in pictures are original illustrations, not photographs.
 
@@ -125,7 +125,8 @@ src/components/               one file per screen (title, topics, narration,
 src/services/                 narration audio, saving, QR links, sharing
 src/art.ts                    medal, rank insignia and emblem drawings
 src/styles.css                theme and layout
-public/audio/                 optional narration MP3s
+public/audio/                 narration recordings and sentence timings
+tools/narration/              script that generates the recordings
 public/images/                illustrations and icons
 tests/                        unit tests
 .github/workflows/deploy.yml  build, test and publish to GitHub Pages

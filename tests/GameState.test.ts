@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   GameState,
   POINTS_PER_DIFFICULTY,
@@ -7,7 +7,7 @@ import {
   SPEED_BONUS,
   type AnswerResult,
 } from '../src/GameState';
-import { splitSentences } from '../src/services/AudioManager';
+import { AudioManager, narrationHash, splitSentences } from '../src/services/AudioManager';
 import { ProgressStorage, SAVE_KEY, type KeyValueStore } from '../src/services/Storage';
 import { gameBaseUrl, parseTopicLink, topicLink } from '../src/services/links';
 import { shareText } from '../src/services/share';
@@ -312,6 +312,62 @@ describe('narration helpers', () => {
       expect(sentences.join(' ')).toBe(topic.narration);
       for (const sentence of sentences) expect(sentence, topic.id).toMatch(/^[A-Z].*\.$/);
     }
+  });
+
+  it('fingerprints narration text', () => {
+    expect(narrationHash('Hello there.')).toMatch(/^[0-9a-f]{8}$/);
+    expect(narrationHash('Hello there.')).toBe(narrationHash('Hello there.'));
+    expect(narrationHash('Hello there.')).not.toBe(narrationHash('Hello there!'));
+  });
+
+  describe('recorded narration', () => {
+    const source = { audioFile: 'audio/topic1.mp3', narration: 'First sentence. Second sentence.' };
+    const manifestFor = (hash: string) => ({
+      files: { 'audio/topic1.mp3': { hash, sentences: [[0.3, 1.2], [1.6, 2.9]] } },
+    });
+
+    /** Stand in for the web server: a manifest (or none) and an audio file (or none). */
+    const serve = (manifest: unknown, audioExists: boolean) =>
+      vi.stubGlobal('fetch', async (url: string) =>
+        url.endsWith('.json')
+          ? new Response(manifest === null ? 'not found' : JSON.stringify(manifest), {
+              status: manifest === null ? 404 : 200,
+            })
+          : new Response(null, {
+              status: audioExists ? 200 : 404,
+              headers: { 'content-type': audioExists ? 'audio/mpeg' : 'text/html' },
+            }),
+      );
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('plays a recording whose text still matches', async () => {
+      serve(manifestFor(narrationHash(source.narration)), true);
+      const audio = new AudioManager();
+      await audio.probe([source.audioFile]);
+      expect(audio.modeFor(source)).toBe('mp3');
+    });
+
+    it('ignores a recording when the narration text was edited afterwards', async () => {
+      serve(manifestFor(narrationHash('Some older wording.')), true);
+      const audio = new AudioManager();
+      await audio.probe([source.audioFile]);
+      expect(audio.modeFor(source)).not.toBe('mp3');
+    });
+
+    it('plays a hand-recorded file that has no timing information', async () => {
+      serve(null, true);
+      const audio = new AudioManager();
+      await audio.probe([source.audioFile]);
+      expect(audio.modeFor(source)).toBe('mp3');
+    });
+
+    it('falls back when there is no recording', async () => {
+      serve(manifestFor(narrationHash(source.narration)), false);
+      const audio = new AudioManager();
+      await audio.probe([source.audioFile]);
+      expect(audio.modeFor(source)).not.toBe('mp3');
+    });
   });
 
   it('writes a share message', () => {

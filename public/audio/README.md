@@ -1,13 +1,21 @@
 # Narration audio
 
-Drop recorded narration here and the game plays it instead of the phone's built-in voice:
+`topic1.mp3`, `topic2.mp3` and `topic3.mp3` are the narration recordings the game plays. They were generated from the `narration` text in `src/GameState.ts` with the free Kokoro text-to-speech model.
 
-- `topic1.mp3` - The Star of the West (the ship)
-- `topic2.mp3` - The First Shot
-- `topic3.mp3` - The Monument
+`narration.json` records when each sentence starts and ends, so the game can highlight the sentence being read. It also stores a fingerprint of the text that was recorded.
 
-The words to record are the `narration` text of each topic in `src/GameState.ts`.
+## After changing a narration
 
-Recording tips: 30 to 60 seconds each, clear voice, MP3 at 128 kbps or higher, normalized volume.
+Run this in the project folder to record it again:
 
-If a file is missing, the game reads that topic's narration aloud with text-to-speech.
+```
+npm run narration
+```
+
+The first run downloads the voice model (about 326 MB). Until you re-record, the game notices that the text no longer matches the recording and reads the new text with the phone's built-in voice instead, so players never hear words that differ from the screen.
+
+To try another voice, set `SOTW_VOICE` first, for example `am_michael` (American male) or `bm_george` (British male).
+
+## Using your own recordings
+
+Replace the MP3 files with your own and delete `narration.json`. The game then plays your files without sentence highlighting.

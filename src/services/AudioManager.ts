@@ -27,8 +27,48 @@ export function splitSentences(text: string): string[] {
   return parts.map((part) => part.trim()).filter((part) => part.length > 0);
 }
 
+/**
+ * A short fingerprint of a narration's text. The generated recordings store
+ * it, so the game can tell when the words were edited after recording.
+ */
+export function narrationHash(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+/** What public/audio/narration.json says about one generated recording. */
+export interface RecordingInfo {
+  /** narrationHash() of the text that was recorded. */
+  hash: string;
+  /** Start and end time, in seconds, of each sentence. */
+  sentences: [number, number][];
+}
+
+function parseManifest(data: unknown): Map<string, RecordingInfo> {
+  const result = new Map<string, RecordingInfo>();
+  const files = (data as { files?: unknown } | null)?.files;
+  if (typeof files !== 'object' || files === null) return result;
+  for (const [file, value] of Object.entries(files as Record<string, unknown>)) {
+    const info = value as Partial<RecordingInfo> | null;
+    if (typeof info?.hash !== 'string' || !Array.isArray(info.sentences)) continue;
+    const sentences = info.sentences.filter(
+      (pair): pair is [number, number] =>
+        Array.isArray(pair) && typeof pair[0] === 'number' && typeof pair[1] === 'number',
+    );
+    result.set(file, { hash: info.hash, sentences });
+  }
+  return result;
+}
+
 export class AudioManager {
   private recorded = new Map<string, boolean>();
+  private recordings = new Map<string, RecordingInfo>();
+  private ticker: ReturnType<typeof setInterval> | null = null;
+  private reportedSentence = -1;
   private source: NarrationSource | null = null;
   private handlers: NarrationHandlers | null = null;
   private sentences: string[] = [];
@@ -39,7 +79,14 @@ export class AudioManager {
   private token = 0;
 
   /** Check once, at startup, which recorded narration files actually exist. */
-  async probe(files: string[]): Promise<void> {
+  async probe(files: string[], manifestUrl = 'audio/narration.json'): Promise<void> {
+    try {
+      const response = await fetch(manifestUrl);
+      if (response.ok) this.recordings = parseManifest(await response.json());
+    } catch {
+      // No sentence timings: recordings still play, just without highlighting.
+    }
+
     await Promise.all(
       files.map(async (file) => {
         try {
@@ -58,8 +105,14 @@ export class AudioManager {
   }
 
   modeFor(source: NarrationSource): NarrationMode {
-    if (this.recorded.get(source.audioFile)) return 'mp3';
+    if (this.recorded.get(source.audioFile) && !this.isStale(source)) return 'mp3';
     return this.canSpeak ? 'speech' : 'text';
+  }
+
+  /** True when a generated recording no longer matches the narration text. */
+  private isStale(source: NarrationSource): boolean {
+    const info = this.recordings.get(source.audioFile);
+    return info !== undefined && info.hash !== narrationHash(source.narration);
   }
 
   get currentState(): NarrationState {
@@ -88,6 +141,7 @@ export class AudioManager {
     if (this.state !== 'playing') return;
     if (this.audio) {
       this.audio.pause();
+      this.stopTicker();
     } else {
       this.token++;
       window.speechSynthesis.cancel();
@@ -120,8 +174,38 @@ export class AudioManager {
     this.handlers?.onState(state);
   }
 
+  /** While a recording plays, keep the highlighted sentence in step with it. */
+  private startTicker(): void {
+    this.stopTicker();
+    const timings = this.source ? this.recordings.get(this.source.audioFile)?.sentences : undefined;
+    if (!timings || timings.length === 0) return;
+
+    const report = () => {
+      const time = this.audio?.currentTime ?? 0;
+      let index = -1;
+      for (let i = 0; i < timings.length; i++) {
+        if (time >= timings[i][0] - 0.05) index = i;
+      }
+      if (index !== this.reportedSentence) {
+        this.reportedSentence = index;
+        this.handlers?.onSentence(index);
+      }
+    };
+    report();
+    this.ticker = setInterval(report, 100);
+  }
+
+  private stopTicker(): void {
+    if (this.ticker !== null) {
+      clearInterval(this.ticker);
+      this.ticker = null;
+    }
+  }
+
   private haltPlayback(): void {
     this.token++;
+    this.stopTicker();
+    this.reportedSentence = -1;
     if (this.audio) {
       this.audio.pause();
       this.audio.removeAttribute('src');
@@ -138,13 +222,19 @@ export class AudioManager {
       const audio = new Audio(source.audioFile);
       audio.preload = 'auto';
       audio.addEventListener('ended', () => {
-        if (this.audio === audio) this.setState('ended');
+        if (this.audio !== audio) return;
+        this.stopTicker();
+        this.reportedSentence = -1;
+        this.handlers?.onSentence(-1);
+        this.setState('ended');
       });
       audio.addEventListener('error', () => {
         if (this.audio !== audio) return;
         // The file could not be played: fall back to the device voice next time.
+        this.stopTicker();
         this.audio = null;
         this.recorded.set(source.audioFile, false);
+        this.handlers?.onSentence(-1);
         this.setState('idle');
       });
       this.audio = audio;
@@ -152,8 +242,11 @@ export class AudioManager {
 
     if (this.state === 'ended') this.audio.currentTime = 0;
     this.setState('playing');
+    this.startTicker();
     this.audio.play().catch(() => {
-      if (this.state === 'playing') this.setState('idle');
+      if (this.state !== 'playing') return;
+      this.stopTicker();
+      this.setState('idle');
     });
   }
 

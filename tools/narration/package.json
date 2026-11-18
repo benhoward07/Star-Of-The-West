@@ -1,0 +1,12 @@
+{
+  "name": "sotw-narration-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Generates the game's narration audio with the Kokoro text-to-speech model. Kept separate so the game itself stays small.",
+  "type": "module",
+  "dependencies": {
+    "@breezystack/lamejs": "^1.2.7",
+    "esbuild": "^0.25.0",
+    "kokoro-js": "^1.2.1"
+  }
+}
